@@ -1,6 +1,9 @@
 ## satellittdata.no OPeNDAP preprocessing
 Use convert_opendap_nbs.py to create a L1_converted.nc file that can be processed with ACOLITE from a satellittdata.no OPeNDAP URL. Subsetting is supported using a limit ROI (in geographical coordinates:--limit S,W,N,E) or an image pixel subset (--sub y0,x0,y1,x1).
 
+## Scope and limitations
+This script accesses the NetCDF files hosted at satellittdata.no and converts them to a file that resembles the output of the ACOLITE cropping/merging tool. This file can then be processed by ACOLITE, e.g. by setting the inputfile parameter in your settings file. For the sun and view geometry, full scene interpolated datasets are provided at satellittdata.no, but these are (not yet) properly supported. A single geometry is stored in the NetCDF file to be used by ACOLITE, either the scene/region midpoint or scene/region average.
+
 ## Setup
 This requires a clone of the ACOLITE code: `git clone https://github.com/acolite/acolite`, with the path to the base directory to be passed on the command line (--acolite_path), or otherwise be included in your python path, for example, assuming your git clone is in the home directory:
 ```
@@ -39,7 +42,7 @@ print('Got scene {}'.format(ret))
 
 ## Run acolite processing with some basic settings
 import acolite as ac
-## set some settings (These are from a paper submitted to Optics Express: Vanhellemont, submitted (May 2020)
+## set some settings, these are from a paper submitted to Optics Express: Vanhellemont, submitted (May 2020)
 settings = {'glint_correction':True,
             'sky_correction_option':'rsky_new',
             'dsf_wave_range':(400,900),
