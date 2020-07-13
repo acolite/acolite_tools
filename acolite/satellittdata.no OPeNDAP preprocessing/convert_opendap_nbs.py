@@ -8,6 +8,7 @@ def convert_opendap_nbs(ncf,
                         geometry='mid', ## resolved geometry is currently not supported for NC inputs to ACOLITE
                                         ## here the options are to use "mid" the scene/ROI midpoint geometry (faster)
                                         ## here the options are to use "mean" the scene/ROI average geometry (slower)
+                        override=True, ## whether to overwrite the ncfile if the path already exists
                         verbosity=0):
 
     import netCDF4, os
@@ -39,6 +40,7 @@ def convert_opendap_nbs(ncf,
         metadata['SATELLITE'] = gatts['DATATAKE_1_SPACECRAFT_NAME']
     except:
         if verbosity > 0: print('Dataset not recognised')
+        return()
 
     ## add BANDS and WAVE data that is normally coming from the metadata scripts
     ## these should be removed from future acolite versions
@@ -83,6 +85,20 @@ def convert_opendap_nbs(ncf,
     metadata['SCENE'] = os.path.splitext(gatts['PRODUCT_URI'])[0]
     metadata['TILE_CODE'] = metadata['SCENE'].split('_')[-2]
     metadata['OBASE'] = '{}_{}_{}'.format(metadata['SATELLITE_SENSOR'],dt.strftime('%Y_%m_%d_%H_%M_%S'), metadata['TILE_CODE'])
+
+    ## get output directory
+    if local_dir is not None:
+        odir = local_dir
+    else:
+        odir = os.cwd()
+    if not os.path.exists(odir): os.makedirs(odir)
+
+    ## output file naming
+    ncfile = '{}/{}_L1_converted.nc'.format(odir,metadata['OBASE'])
+    if (os.path.exists(ncfile)) & (not override):
+        if verbosity > 0: print('File exists {}'.format(ncfile))
+        nc.close()
+        return(ncfile)
 
     ## store the original attributes
     for k in gatts: metadata['{}_{}'.format('ext', k)] = gatts[k]
@@ -221,16 +237,6 @@ def convert_opendap_nbs(ncf,
     metadata['ISODATE']=gatts['PRODUCT_START_TIME']
     ## metadata finished
 
-    ## get output directory
-    if local_dir is not None:
-        odir = local_dir
-    else:
-        odir = os.cwd()
-    if not os.path.exists(odir): os.makedirs(odir)
-
-    ## output file naming
-    ncfile = '{}/{}_L1_converted.nc'.format(odir,metadata['OBASE'])
-
     ## read data and output to new file
     new = True ## creates a new NetCDF file
     for r in required:
@@ -281,6 +287,8 @@ def convert_opendap_nbs(ncf,
 
 if __name__ == '__main__':
     import argparse
+    import sys, os
+
     parser = argparse.ArgumentParser(description='NBS/OPeNDAP preprocessor for ACOLITE')
     parser.add_argument('--input', help='OPeNDAP URL to L1C Sentinel-2 data')
     parser.add_argument('--output', help='Output directory, if not provided will output to current working directory', default=None)
@@ -288,13 +296,14 @@ if __name__ == '__main__':
     parser.add_argument('--sub', help='4 element for cropping ROI in pixels (default=None)', default=None)
     parser.add_argument('--geometry', help='Use single geometry for the scene, either "mid" or "mean" for scene/ROI (default=mid)', default="mid")
     parser.add_argument('--verbosity', help='Verbosity (default=0)', default=0)
+    parser.add_argument('--override', help='Overwrite NetCDF files (default=True)', default=True)
+
     parser.add_argument('--acolite_path', help='Path to ACOLITE code (if not already in Python path) (default=None)', default=None)
 
     args, unknown = parser.parse_known_args()
 
     ## acolite path
     if args.acolite_path is not None:
-        import sys, os
         sys.path.append(os.path.expanduser(args.acolite_path))
     try:
         import acolite as ac
@@ -318,6 +327,13 @@ if __name__ == '__main__':
         else:
             args.sub = None
 
+    ## parse output directory
+    if args.output is not None:
+        args.output = os.path.expanduser(args.output)
+
+    ##
+    if type(args.override) == str: args.override = eval(args.override)
+
     if args.input is not None:
         if args.input[-5:] == '.html':
             args.input = args.input[0:-5]
@@ -328,4 +344,5 @@ if __name__ == '__main__':
                             limit=args.limit,
                             sub=args.sub,
                             geometry=args.geometry,
+                            override=args.override,
                             verbosity=int(args.verbosity))
