@@ -9,17 +9,17 @@ sys.path.append(os.path.expanduser("~/git/acolite"))
 ```
 
 ## Examples
-CLI: Crop a and convert scene over Oslofjord and output to the ./Oslo directory:
+CLI: Crop a and convert scene over Oslofjord and output to the $HOME/Oslo directory.
 ```
-python acolite/satellittdata.no\ OPeNDAP\ preprocessing/convert_opendap_nbs.py --verbosity 1 —-limit 59.84,10.65,59.91,10.81 --output ./Oslo --acolite_path ~/git/acolite --input http://nbstds.met.no/thredds/dodsC/NBS/S2B/2020/06/30/S2B_MSIL1C_20200630T124709_N0209_R138_T31XFH_20200630T132039.nc
+python acolite/satellittdata.no\ OPeNDAP\ preprocessing/convert_opendap_nbs.py --verbosity 1 —-limit 59.84,10.65,59.91,10.81 --output ~/Oslo --acolite_path ~/git/acolite --input http://nbstds.met.no/thredds/dodsC/NBS/S2B/2020/06/30/S2B_MSIL1C_20200630T124709_N0209_R138_T31XFH_20200630T132039.nc
 ```
 
-CLI: Download and convert a full scene to the current working directory:
+CLI: Download and convert a full scene to the current working directory.
 ```
 python acolite/satellittdata.no\ OPeNDAP\ preprocessing/convert_opendap_nbs.py  'http://nbstds.met.no/thredds/dodsC/NBS/S2B/2020/06/30/S2B_MSIL1C_20200630T124709_N0209_R138_T31XFH_20200630T132039.nc'
 ```
 
-Python: Import in other script:
+Python: Import in other script, crop a scene and process immediately with ACOLITE.
 ```
 ## Import business
 import sys, os
