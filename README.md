@@ -3,12 +3,12 @@ Various scripts that can be used for [ACOLITE](https://github.com/acolite/acolit
 
 Many of these tools require a clone of the ACOLITE or ACOLITE_MR code to be in your python path, for example:
 ```
-import sys
-sys.path.add('/path/to/acolite')
+import sys, os
+sys.path.append(os.path.expanduser(args.acolite_path))
 ```
 
 ## ACOLITE
-* satellittdata.no OPeNDAP preprocessing/convert_opendap_nbs.py: creates a L1_converted.nc file from a satellittdata.no OPeNDAP URL that can be processed with ACOLITE
+* satellittdata.no OPeNDAP preprocessing: creates a L1_converted.nc file from a satellittdata.no OPeNDAP URL that can be processed with ACOLITE
 
 ## ACOLITE_MR
 (none yet)
