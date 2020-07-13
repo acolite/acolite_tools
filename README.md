@@ -4,7 +4,7 @@ Various scripts that can be used for [ACOLITE](https://github.com/acolite/acolit
 Many of these tools require a clone of the ACOLITE or ACOLITE_MR code to be in your python path, for example:
 ```
 import sys, os
-sys.path.append(os.path.expanduser(args.acolite_path))
+sys.path.append(os.path.expanduser('~/git/acolite'))
 ```
 
 ## ACOLITE
