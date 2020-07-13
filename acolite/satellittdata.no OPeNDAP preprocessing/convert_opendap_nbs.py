@@ -1,9 +1,6 @@
 ## Script to access OPeNDAP data from satellittdata.no and convert it to a L1 NetCDF file that ACOLITE can process
 ## Written by Quinten Vanhellemont 2020-07-13
 
-## Script to access OPeNDAP data from satellittdata.no and convert it to a L1 NetCDF file that ACOLITE can process
-## Written by Quinten Vanhellemont 2020-07-13
-
 def convert_opendap_nbs(ncf,
                         local_dir=None, ## directory to store the converted file *recommended* otherwise wd is used
                         limit=None, ## limit of ROI [S, W, N, E] to crop data
