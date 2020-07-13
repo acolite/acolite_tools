@@ -294,8 +294,8 @@ if __name__ == '__main__':
 
     ## acolite path
     if args.acolite_path is not None:
-        import sys
-        sys.path.append(args.acolite_path)
+        import sys, os
+        sys.path.append(os.path.expanduser(args.acolite_path))
     try:
         import acolite as ac
     except:
