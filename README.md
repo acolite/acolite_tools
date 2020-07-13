@@ -1,10 +1,10 @@
 ## ACOLITE Tools
 Various scripts that can be used for [ACOLITE](https://github.com/acolite/acolite) or [ACOLITE_MR](https://github.com/acolite/acolite).
 
-Many of these tools require ACOLITE or ACOLITE_MR to be in your python path, for example:
+Many of these tools require a clone of the ACOLITE or ACOLITE_MR code to be in your python path, for example:
 ```
 import sys
-sys.path.add('/path/to/acolite/clone')
+sys.path.add('/path/to/acolite')
 ```
 
 ## ACOLITE
