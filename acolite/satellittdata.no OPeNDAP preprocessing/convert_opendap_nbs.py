@@ -1,5 +1,8 @@
 ## Script to access OPeNDAP data from satellittdata.no and convert it to a L1 NetCDF file that ACOLITE can process
 ## Written by Quinten Vanhellemont 2020-07-13
+##
+## last updates: 2020-07-14 (QV) added option to get full angles datasets
+##
 
 def convert_opendap_nbs(ncf,
                         local_dir=None, ## directory to store the converted file *recommended* otherwise wd is used
@@ -8,6 +11,7 @@ def convert_opendap_nbs(ncf,
                         geometry='mid', ## resolved geometry is currently not supported for NC inputs to ACOLITE
                                         ## here the options are to use "mid" the scene/ROI midpoint geometry (faster)
                                         ## here the options are to use "mean" the scene/ROI average geometry (slower)
+                        add_angles=False, ## whether to read the angle data
                         override=True, ## whether to overwrite the ncfile if the path already exists
                         verbosity=0):
 
@@ -106,10 +110,19 @@ def convert_opendap_nbs(ncf,
     ## required dataset names, and name translation
     ## ACOLITE expects the wavelength labeled TOA reflectance in the L1 NCDF: rhot_xxx
     required = [{'in':'lon', 'out':'lon'}, {'in':'lat', 'out':'lat'}]
+    if add_angles:
+        required += [{'in':'sun_azimuth', 'out':'saa'},{'in':'sun_zenith', 'out':'sza'}]
+
     for ib, band in enumerate(metadata['BAND_NAMES'].split(',')):
         wk = 'WAVES'
         if wk not in metadata: wk = 'WAVES_ALL'
         required.append({'in':band, 'out':'rhot_{}'.format(metadata[wk][ib])})
+        ## per band angles
+        ## since they are the NN interpolated 5km grids we could probably save some bandwidth
+        ## by subsetting and regenerating the full datasets (to do)
+        if add_angles:
+            required.append({'in':'view_azimuth_{}'.format(band), 'out':'vaa_{}'.format(band)})
+            required.append({'in':'view_zenith_{}'.format(band), 'out':'vza_{}'.format(band)})
 
     ## get scene projection info
     sdim = nc.variables['lat'].shape
@@ -269,7 +282,6 @@ def convert_opendap_nbs(ncf,
                 else:
                     dat = nc.variables[dsi][0, sub[0]:sub[2], sub[1]:sub[3]]
 
-            print(dat.dtype)
             ## apply quantification value to convert to toa reflectance
             if ('Sentinel-2' in metadata['SATELLITE']) & ('rhot_' in r['out']):
                 dat = dat.astype(np.float32)/float(gatts['QUANTIFICATION_VALUE'])
@@ -277,11 +289,50 @@ def convert_opendap_nbs(ncf,
                 ## keep the attributes we need
                 atto = {'units': 1, 'wavelength' : float(atti['wavelength'])}
 
+            ## set up variables for the average view geometry
+            if new:
+                rdim = dat.shape
+                n_vaa = 0
+                n_vza = 0
+                vaa_ave = np.zeros(rdim)
+                vza_ave = np.zeros(rdim)
+
+            ## write to netcdf file
             ac.output.nc_write(ncfile, dso, dat, attributes=metadata, dataset_attributes=atto, new=new)
             new = False ## appends to the NetCDF file
 
+            ## for average angles
+            if 'vaa_' in dso:
+                n_vaa+=1
+                vaa_ave += dat
+            if 'vza_' in dso:
+                n_vza+=1
+                vza_ave += dat
+
+            ## compute raa per band
+            if dso == 'saa': saa = dat * 1
+            if 'vaa_' in dso:
+                if verbosity > 0: print('Writing {}'.format(dso.replace('vaa_','raa_')))
+                raa = np.abs(saa-dat)
+                raa[raa>180] -= 180
+                ac.output.nc_write(ncfile, dso.replace('vaa_','raa_'), raa, dataset_attributes=atto)
+
+
     ## close NetCDF file
     nc.close()
+
+    ## add average geometry
+    if add_angles:
+        if verbosity > 0: print('Creating average view geometry')
+        vza_ave /= n_vza
+        ac.output.nc_write(ncfile, 'vza', vza_ave)
+
+        vaa_ave /= n_vaa
+        ac.output.nc_write(ncfile, 'vaa', vaa_ave)
+
+        raa = np.abs(saa-vaa_ave)
+        raa[raa>180] -= 180
+        ac.output.nc_write(ncfile, 'raa', raa)
 
     ## return the path to the new file
     return(ncfile)
@@ -296,6 +347,7 @@ if __name__ == '__main__':
     parser.add_argument('--limit', help='4 element for cropping ROI in coordinates (default=None)', default=None)
     parser.add_argument('--sub', help='4 element for cropping ROI in pixels (default=None)', default=None)
     parser.add_argument('--geometry', help='Use single geometry for the scene, either "mid" or "mean" for scene/ROI (default=mid)', default="mid")
+    parser.add_argument('--add_angles', help='Read and store the resolved geometry (default=False)', default=False)
     parser.add_argument('--verbosity', help='Verbosity (default=0)', default=0)
     parser.add_argument('--override', help='Overwrite NetCDF files (default=True)', default=True)
 
@@ -334,6 +386,7 @@ if __name__ == '__main__':
 
     ##
     if type(args.override) == str: args.override = eval(args.override)
+    if type(args.add_angles) == str: args.add_angles = eval(args.add_angles)
 
     if args.input is not None:
         if args.input[-5:] == '.html':
@@ -345,5 +398,6 @@ if __name__ == '__main__':
                             limit=args.limit,
                             sub=args.sub,
                             geometry=args.geometry,
+                            add_angles=args.add_angles,
                             override=args.override,
                             verbosity=int(args.verbosity))
