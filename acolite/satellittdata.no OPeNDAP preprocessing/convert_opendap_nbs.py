@@ -269,9 +269,10 @@ def convert_opendap_nbs(ncf,
                 else:
                     dat = nc.variables[dsi][0, sub[0]:sub[2], sub[1]:sub[3]]
 
+            print(dat.dtype)
             ## apply quantification value to convert to toa reflectance
             if ('Sentinel-2' in metadata['SATELLITE']) & ('rhot_' in r['out']):
-                dat = dat.astype(float)/float(gatts['QUANTIFICATION_VALUE'])
+                dat = dat.astype(np.float32)/float(gatts['QUANTIFICATION_VALUE'])
 
                 ## keep the attributes we need
                 atto = {'units': 1, 'wavelength' : float(atti['wavelength'])}
