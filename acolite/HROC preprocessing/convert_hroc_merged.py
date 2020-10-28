@@ -1,5 +1,7 @@
 ## Script to preprocess merged data from HR-OC project and convert it to a L1 NetCDF file that ACOLITE can process
 ## Written by Quinten Vanhellemont 2020-07-14
+## modifications:
+##                2020-10-28 (QV) modifications done by MB for new file naming
 
 def convert_hroc_merged(ifile,
                         local_dir=None, ## directory to store the converted file *recommended* otherwise wd is used
@@ -19,8 +21,15 @@ def convert_hroc_merged(ifile,
     bn, ext = os.path.splitext(os.path.basename(ifile))
     sp = bn.split('-')
 
-    ## for June file
-    year, month, day, zone, tile_code, resolution = sp
+    ## for June file 2019-06-02-35T-mosaic-60.nc
+    #year, month, day, zone, tile_code, resolution = sp
+    ## MSIL1C-60m-7bls-35T-A-050-20200828-v1.0.nc
+    msil1c, resolution, area, zone, sat, relorbit, ymd, version = sp
+    year = ymd[0:4]
+    month = ymd[4:6]
+    day = ymd[6:8]
+    resolution = resolution[:-1]
+    satellite_ = 'Sentinel-2B' if sat == 'B' else 'Sentinel-2A'
 
     ## parse datetime from the input filename
     dt = datetime.datetime(int(year), int(month), int(day))
@@ -61,7 +70,8 @@ def convert_hroc_merged(ifile,
 
     ## some tags that ACOLITE accesses from the metadata
     metadata['SCENE'] = bn
-    metadata['TILE_CODE'] = '_'.join([zone, tile_code, resolution])
+    #metadata['TILE_CODE'] = '_'.join([zone, tile_code, resolution])
+    metadata['TILE_CODE'] = '_'.join([area, zone, resolution])
     metadata['OBASE'] = '{}_{}_{}'.format(metadata['SATELLITE_SENSOR'],dt.strftime('%Y_%m_%d_%H_%M_%S'), metadata['TILE_CODE'])
 
     ## placeholder for scene projection
