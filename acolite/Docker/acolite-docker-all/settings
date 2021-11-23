@@ -1,0 +1,4 @@
+## ACOLITE settings for Docker
+output=output/
+inputfile=input/
+

@@ -1,0 +1,6 @@
+## ACOLITE settings for Docker with TACT
+output=output/
+inputfile=input/
+tact_run=True
+tact_output_atmosphere=True
+tact_output_intermediate=True
