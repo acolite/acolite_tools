@@ -28,5 +28,5 @@ sys.path.append(user_home+'/git/acolite')
 from tgc import tgc
 inputfile='~/TGC/S2RES/S2A_MSIL1C_20190905T113321_N0208_R080_T28RFT_20190905T115747_S2resampling.nc'
 output='~/TGC/Converted'
-ret = tgc(ifile, output=output)
+ret = tgc(inputfile, output=output)
 ```
