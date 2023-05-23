@@ -2,7 +2,7 @@
 Use tgc.py to run TGC on S2Resampling BEAM-NetCDF file
 
 ## Scope and limitations
-This script assumed the TOA glint contribution can be estimated from random pixels in B11 by optimising ACOLITE LUTs for a given wind speed and aerosol optical depth. TOA glint is then computed using the band specific geometry and removed from the TOA reflectance.
+This script assumed the TOA glint contribution can be estimated from random pixels in B11 using the ACOLITE LUTs to find an optimised wind speed and aerosol optical depth. TOA glint is then computed using the band specific geometry and removed from the TOA reflectance.
 
 ## Setup
 This requires a clone of the "new" generic ACOLITE code: `git clone https://github.com/acolite/acolite --depth=1`, with the path to the base directory to be passed on the command line (--acolite_path), or otherwise be included in your Python path, for example, assuming your git clone is in the home directory:
