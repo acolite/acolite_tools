@@ -1,0 +1,51 @@
+
+<!-- example: gpt S2resampling.xml -PsourceFile="S2A_MSIL1C_20190905T113321_N0208_R080_T28RFT_20190905T115747.SAFE" -PtargetFile="S2A_MSIL1C_20190905T113321_N0208_R080_T28RFT_20190905T115747_resampled.nc" -->
+
+<graph id="someGraphId">
+  <version>1.0</version>
+    <node id="Read">
+      <operator>Read</operator>
+      <sources/>
+      <parameters>
+        <file>${sourceFile}</file>
+      </parameters>
+    </node>
+
+    <node id="S2Resampling">
+      <operator>S2Resampling</operator>
+      <sources>
+        <sourceProduct refid="Read"/>
+      </sources>
+      <parameters>
+        <resolution>60</resolution>
+        <upsampling>Bilinear</upsampling>
+        <downsampling>Mean</downsampling>
+        <flagDownsampling>First</flagDownsampling>
+        <resampleOnPyramidLevels>false</resampleOnPyramidLevels>
+      </parameters>
+    </node>
+
+    <!-- This is optional, comment or delete out if it does not work -->
+
+    <node id="BandMergeTileCache">
+      <operator>TileCache</operator>
+      <sources>
+        <source>S2Resampling</source>
+      </sources>
+      <parameters>
+        <cacheSize>2560</cacheSize>
+      </parameters>
+    </node>
+
+
+    <node id="Write">
+      <operator>Write</operator>
+      <sources>
+        <sourceProduct refid="S2Resampling"/>
+      </sources>
+      <parameters>
+        <file>${targetFile}</file>
+        <formatName>NetCDF4-BEAM</formatName>
+      </parameters>
+    </node>
+</graph>
