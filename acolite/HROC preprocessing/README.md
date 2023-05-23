@@ -1,3 +1,6 @@
+## Note
+This file is meant for the previous version of ACOLITE, now at https://github.com/acolite/acolite_ls2. The current "generic" version of ACOLITE, at https://github.com/acolite/acolite, has this capability built in through the s2resampling processing support.
+
 ## HR-OC preprocessing
 Use convert_hroc_merged.py to create a L1_converted.nc file that can be processed with ACOLITE from a merged HR-OC L1 file.
 

@@ -2,7 +2,6 @@
 ## Written by Quinten Vanhellemont 2020-07-14
 ## modifications:
 ##                2020-10-28 (QV) modifications done by MB for new file naming
-##                2021-04-13 (QV) gatts required for new acolite
 
 def convert_hroc_merged(ifile,
                         local_dir=None, ## directory to store the converted file *recommended* otherwise wd is used
@@ -74,9 +73,6 @@ def convert_hroc_merged(ifile,
     #metadata['TILE_CODE'] = '_'.join([zone, tile_code, resolution])
     metadata['TILE_CODE'] = '_'.join([area, zone, resolution])
     metadata['OBASE'] = '{}_{}_{}'.format(metadata['SATELLITE_SENSOR'],dt.strftime('%Y_%m_%d_%H_%M_%S'), metadata['TILE_CODE'])
-
-    metadata['sensor'] = metadata['SATELLITE_SENSOR']
-    metadata['isodate'] = dt.isoformat()
 
     ## placeholder for scene projection
     ## can be reversed from the lat, lon and UTM zone?
