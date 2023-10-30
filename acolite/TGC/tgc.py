@@ -13,13 +13,15 @@
 ## def tgc
 ## QV 2023-04-27 "Lanzarote" TOA Glint Correction
 ## based on work done in November 2022-April 2023 for HROC
+##
+## last updates: 2023-10-30 (QV) added min_pixels keyword
+
 def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, override = False,
-        lutdw = None, par = 'romix+rsky_t', base_luts = ['ACOLITE-LUT-202110-MOD2'],
+        lutdw = None, par = 'romix+rsky_t', base_luts = ['ACOLITE-LUT-202110-MOD2'], min_pixels = 500,
         ancillary_data=False, write_rhoi = False, reference_band = '11', glint_threshold = 0.02):
     import os, shutil, time
     import numpy as np
     import acolite as ac
-    #import scipy, scipy.ndimage
     import scipy.optimize, scipy.ndimage
     import dateutil.parser, datetime
 
@@ -35,6 +37,7 @@ def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, overrid
     ## seed and fitting settings
     num = 5000
     np.random.seed(2022)
+    min_pixels = max((1, min_pixels))
 
     ## function for fitting wind speed and aot
     def f_fit(x, band, lut):
@@ -161,6 +164,14 @@ def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, overrid
     m = ndwi_mask[s0[0], s0[1]].flatten() * 1.0
     m[m==0] = np.nan
     ms = np.where(ndwi_mask[s0[0], s0[1]].flatten())
+
+    ## test whether enough pixels are available
+    if len(ms[0]) < min_pixels:
+        if verbosity > 1:
+            print('Not enough pixels available ({}/{}) to estimate wind speed and aerosol optical depth.'.format(len(ms[0]), min_pixels))
+            print('Not performing TGC for {}.'.format(ncf))
+        return(ncf)
+
     s = s0[0][ms[0]], s0[1][ms[0]]
 
     ## read reference dataset
@@ -180,7 +191,7 @@ def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, overrid
     vza_ = gem['data']['view_zenith_B{}'.format(reference_band)][s[0],s[1]].flatten()
 
     ## fit wind and aot
-    ss = scipy.optimize.minimize(f_fit, [(0.1, 0.01)], args=(reference_band, lut), bounds = [(0.1,20), (0.01, 5)])
+    ss = scipy.optimize.minimize(f_fit, [0.1, 0.01], args=(reference_band, lut), bounds = [(0.1,20), (0.01, 5)])
     wind_fit, aot_fit = ss.x
     print('Fitted wind={:.2f}m/s aot={:.2f}'.format(wind_fit, aot_fit))
 
@@ -268,6 +279,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--method', help='Method to use, T5 = compute TOA glint per band and remove, T4 = T5, but add band average geometry glint back in (default=T5)', default='T5')
     parser.add_argument('--glint_threshold', help='B11 TOA threshold above which to apply TGC (default=0.01)', default=0.01)
+    parser.add_argument('--min_pixels', help='Minimum required pixels to estimate wind speed and aot (default=500)', default=500)
 
     args, unknown = parser.parse_known_args()
 
@@ -293,4 +305,5 @@ if __name__ == '__main__':
 
         ## convert the remote file
         ret = tgc(args.input, output=args.output, override=args.override, verbosity=int(args.verbosity),
-                  ancillary_data=args.ancillary_data, method=args.method, glint_threshold=float(args.glint_threshold))
+                  ancillary_data=args.ancillary_data, method=args.method, glint_threshold=float(args.glint_threshold),
+                  min_pixels=int(args.min_pixels))
