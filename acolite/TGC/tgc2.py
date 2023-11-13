@@ -17,13 +17,13 @@
 ## last updates: 2023-10-30 (QV) added min_pixels keyword
 ##               2023-11-06 (QV) allow separate estimation and correction
 ##               2023-11-09 (QV) added grid files and grid interpolation/fill
-##               2023-11-13 (QV) update for multi point grid_files
+##               2023-11-13 (QV) update for multi point grid_files, add toa_min
 
 def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, override = False,
         estimate = True, estimate_return = False, correct = True,
         wind_input = None, wind_default = 2.0,
         aot_input = None, aot_default = 0.1,
-        grid_files = None, grid_fill = True, grid_write = False,
+        grid_files = None, grid_fill = True, grid_write = False, toa_min = 1.0/65536.0,
         lutdw = None, par = 'romix+rsky_t', base_luts = ['ACOLITE-LUT-202110-MOD2'], min_pixels = 500,
         ancillary_data=False, write_rhoi = False, reference_band = '11', glint_threshold = 0.02):
     import os, shutil, time, json
@@ -369,8 +369,8 @@ def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, overrid
                     if write_rhoi: ac.output.nc_write(ofile, 'rhoi_{}_mean'.format(band), roint_a)
                     ## add mean geometry rhoi
                     d[mask_glint] += roint_a[mask_glint]
-                ## add zeroes where negative
-                d[d<0] = 0
+                ## fill values less than toa min
+                d[d<toa_min] = toa_min
 
                 ## write corrected band
                 ac.output.nc_write(ofile, ds, d)
@@ -420,6 +420,8 @@ if __name__ == '__main__':
     parser.add_argument('--grid_files', help='JSON files with wind and aerosol tie points (default=None)', default=None)
     parser.add_argument('--grid_fill', help='Fill grid outside tie points (default=True)', default=True)
     parser.add_argument('--grid_write', help='Write grid in output NetCDF file (default=False)', default=False)
+
+    parser.add_argument('--toa_min', help='Minimum value at TOA after TGC (default=1.0/65536.0)', default=1.0/65536.0)
 
     args, unknown = parser.parse_known_args()
 
@@ -472,6 +474,7 @@ if __name__ == '__main__':
                   estimate = args.estimate, estimate_return = args.estimate_return, correct = args.correct,
                   wind_input = args.wind, aot_input = args.aot,
                   grid_files = args.grid_files, grid_fill = args.grid_fill, grid_write = args.grid_write,
+                  toa_min = args.toa_min,
                  )
 
         if (args.estimate) & (args.estimate_return):
