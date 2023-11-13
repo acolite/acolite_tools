@@ -261,10 +261,10 @@ def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, overrid
                 if verbosity > 0: print('Using wind/aot grid from {} files'.format(len(res)))
 
                 ## extract the grid points
-                lons = np.asarray([r['lon'] for r in res]).astype(np.float32).flatten()
-                lats = np.asarray([r['lat'] for r in res]).astype(np.float32).flatten()
-                aots = np.asarray([r['aot'] for r in res]).astype(np.float32).flatten()
-                winds = np.asarray([r['wind'] for r in res]).astype(np.float32).flatten()
+                lons = np.hstack([r['lon'] for r in res]).astype(np.float32).flatten()
+                lats = np.hstack([r['lat'] for r in res]).astype(np.float32).flatten()
+                aots = np.hstack([r['aot'] for r in res]).astype(np.float32).flatten()
+                winds = np.hstack([r['wind'] for r in res]).astype(np.float32).flatten()
 
                 if len(lons) < 3:
                     print('Data read for {} grid points'.format(len(lons)))
