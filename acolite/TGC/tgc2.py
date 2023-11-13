@@ -17,6 +17,7 @@
 ## last updates: 2023-10-30 (QV) added min_pixels keyword
 ##               2023-11-06 (QV) allow separate estimation and correction
 ##               2023-11-09 (QV) added grid files and grid interpolation/fill
+##               2023-11-13 (QV) update for multi point grid_files
 
 def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, override = False,
         estimate = True, estimate_return = False, correct = True,
@@ -257,18 +258,20 @@ def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, overrid
 
                 ## load the json data
                 res = [json.load(open(f, 'r')) for f in grid_files]
-                if len(res) < 3:
-                    print('Data read from from {} grid files'.format(len(res)))
-                    print('Exiting. Wind/aot grid computation required at least 3 grid points')
-                    return
-
                 if verbosity > 0: print('Using wind/aot grid from {} files'.format(len(res)))
 
                 ## extract the grid points
-                lons = np.asarray([r['lon'] for r in res]).astype(np.float32)
-                lats = np.asarray([r['lat'] for r in res]).astype(np.float32)
-                aots = np.asarray([r['aot'] for r in res]).astype(np.float32)
-                winds = np.asarray([r['wind'] for r in res]).astype(np.float32)
+                lons = np.asarray([r['lon'] for r in res]).astype(np.float32).flatten()
+                lats = np.asarray([r['lat'] for r in res]).astype(np.float32).flatten()
+                aots = np.asarray([r['aot'] for r in res]).astype(np.float32).flatten()
+                winds = np.asarray([r['wind'] for r in res]).astype(np.float32).flatten()
+
+                if len(lons) < 3:
+                    print('Data read for {} grid points'.format(len(lons)))
+                    print('Exiting. Wind/aot grid computation required at least 3 grid points')
+                    return
+
+                if verbosity > 0: print('Using {} wind/aot grid points'.format(len(lons)))
 
                 ifun = LinearNDInterpolator((lons, lats), aots)
                 aot = ifun((gem['data']['lon'], gem['data']['lat']))
