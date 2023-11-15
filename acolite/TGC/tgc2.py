@@ -23,7 +23,7 @@ def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, overrid
         estimate = True, estimate_return = False, correct = True,
         wind_input = None, wind_default = 2.0,
         aot_input = None, aot_default = 0.1,
-        grid_files = None, grid_fill = True, grid_write = False, toa_min = 1.0/65536.0,
+        grid_files = None, grid_fill = True, grid_write = False, toa_min = 0.0001,
         lutdw = None, par = 'romix+rsky_t', base_luts = ['ACOLITE-LUT-202110-MOD2'], min_pixels = 500,
         ancillary_data=False, write_rhoi = False, reference_band = '11', glint_threshold = 0.02):
     import os, shutil, time, json
@@ -421,7 +421,7 @@ if __name__ == '__main__':
     parser.add_argument('--grid_fill', help='Fill grid outside tie points (default=True)', default=True)
     parser.add_argument('--grid_write', help='Write grid in output NetCDF file (default=False)', default=False)
 
-    parser.add_argument('--toa_min', help='Minimum value at TOA after TGC (default=1.0/65536.0)', default=1.0/65536.0)
+    parser.add_argument('--toa_min', help='Minimum value at TOA after TGC (default=0.0001)', default=0.0001)
 
     args, unknown = parser.parse_known_args()
 
@@ -474,7 +474,7 @@ if __name__ == '__main__':
                   estimate = args.estimate, estimate_return = args.estimate_return, correct = args.correct,
                   wind_input = args.wind, aot_input = args.aot,
                   grid_files = args.grid_files, grid_fill = args.grid_fill, grid_write = args.grid_write,
-                  toa_min = args.toa_min,
+                  toa_min = float(args.toa_min),
                  )
 
         if (args.estimate) & (args.estimate_return):
