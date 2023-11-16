@@ -18,6 +18,7 @@
 ##               2023-11-06 (QV) allow separate estimation and correction
 ##               2023-11-09 (QV) added grid files and grid interpolation/fill
 ##               2023-11-13 (QV) update for multi point grid_files, add toa_min
+##               2023-11-16 (QV) track band mask (assumed to be add_offset)
 
 def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, override = False,
         estimate = True, estimate_return = False, correct = True,
@@ -335,7 +336,9 @@ def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, overrid
                     print(ds, 'computing band specific rhoi for wind={:.2f}m/s aot={:.2f}'.format(wind_fit, aot_fit))
 
                 ## read band data
-                d = ac.shared.nc_data(ncf, ds)
+                d, a = ac.shared.nc_data(ncf, ds, attributes=True)
+                data_mask = (d == a['add_offset'])
+
                 ## band specific view geometry
                 vza_ = ac.shared.nc_data(ncf, 'view_zenith_B{}'.format(band))
                 vaa_ = ac.shared.nc_data(ncf, 'view_azimuth_B{}'.format(band))
@@ -372,17 +375,18 @@ def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, overrid
                 ## fill values less than toa min
                 d[d<toa_min] = toa_min
 
+                ## add back the mask
+                d[data_mask] = a['add_offset']
+
                 ## write corrected band
                 ac.output.nc_write(ofile, ds, d)
                 tb1 = time.time()
                 secb = tb1-tb0
                 print('band {} took {:.1f} seconds'.format(band, secb))
-                #print('band {} took {:.1f} minutes'.format(band, secb/60))
 
         ## end time
         t1 = time.time()
         sec = t1-t0
-        #print('{:.1f} seconds'.format(sec))
         print('Total correction took {:.1f} minutes'.format(sec/60))
 
         return(ofile)
