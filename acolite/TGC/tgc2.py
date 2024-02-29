@@ -19,13 +19,16 @@
 ##               2023-11-09 (QV) added grid files and grid interpolation/fill
 ##               2023-11-13 (QV) update for multi point grid_files, add toa_min
 ##               2023-11-16 (QV) track band mask (assumed to be add_offset)
+##               2024-02-28 (QV) added scaling option, i.e. to compute the per pixel ratio for roint and rhot at reference band
+##                               changed minimum aot and wind (to allow valid LUT outputs)
 
 def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, override = False,
         estimate = True, estimate_return = False, correct = True,
-        wind_input = None, wind_default = 2.0,
-        aot_input = None, aot_default = 0.1,
+        wind_input = None, wind_default = 2.0, wind_min = 0.1,
+        aot_input = None, aot_default = 0.1, aot_min = 0.01,
         grid_files = None, grid_fill = True, grid_write = False, toa_min = 0.0001,
         lutdw = None, par = 'romix+rsky_t', base_luts = ['ACOLITE-LUT-202110-MOD2'], min_pixels = 500,
+        scaling = False,
         ancillary_data=False, write_rhoi = False, reference_band = '11', glint_threshold = 0.02):
     import os, shutil, time, json
     import numpy as np
@@ -235,7 +238,7 @@ def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, overrid
         vza_ = gem['data']['view_zenith_B{}'.format(reference_band)][s[0],s[1]].flatten()
 
         ## fit wind and aot
-        ss = scipy.optimize.minimize(f_fit, [0.1, 0.01], args=(reference_band, lut), bounds = [(0.1,20), (0.01, 5)])
+        ss = scipy.optimize.minimize(f_fit, [wind_min, aot_min], args=(reference_band, lut), bounds = [(wind_min,20), (aot_min, 5)])
         wind_fit, aot_fit = ss.x
 
         ## print fitting time
@@ -276,10 +279,12 @@ def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, overrid
 
                 ifun = LinearNDInterpolator((lons, lats), aots)
                 aot = ifun((gem['data']['lon'], gem['data']['lat']))
+                aot[aot<aot_min] = aot_min
                 if grid_fill: aot = ac.shared.fillnan(aot)
 
                 ifun = LinearNDInterpolator((lons, lats), winds)
                 wind = ifun((gem['data']['lon'], gem['data']['lat']))
+                wind[wind<wind_min] = wind_min
                 if grid_fill: wind = ac.shared.fillnan(wind)
 
                 grid = True
@@ -311,6 +316,45 @@ def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, overrid
             ac.output.nc_write(ofile, 'aot', aot)
             ac.output.nc_write(ofile, 'wind', wind)
             print('Wrote aot and wind to {}'.format(ofile))
+
+        ## if scaling
+        if scaling:
+            saa = gem['data']['sun_azimuth'] * 1.0
+            sza = gem['data']['sun_zenith'] * 1.0
+
+            if 'view_zenith_B{}'.format(reference_band) in gem['data']:
+                 vza_ = gem['data']['view_zenith_B{}'.format(reference_band)] * 1.0
+                 vaa_ = gem['data']['view_azimuth_B{}'.format(reference_band)] * 1.0
+                 ref_data = gem['data']['B{}'.format(reference_band)] * 1.0
+            else:
+                 vza_ = ac.shared.nc_data(ncf, 'view_zenith_B{}'.format(reference_band))
+                 vaa_ = ac.shared.nc_data(ncf, 'view_azimuth_B{}'.format(reference_band))
+                 ref_data = ac.shared.nc_data(ncf, 'B{}'.format(reference_band))
+
+            #saa = ac.shared.nc_data(ncf, 'sun_azimuth')
+            #sza = ac.shared.nc_data(ncf, 'sun_zenith')
+            #vza_ = ac.shared.nc_data(ncf, 'view_zenith_B{}'.format(reference_band))
+            #vaa_ = ac.shared.nc_data(ncf, 'view_azimuth_B{}'.format(reference_band))
+            ref_data = ac.shared.nc_data(ncf, 'B{}'.format(reference_band))
+
+            raa_ = np.abs(saa-vaa_)
+            del saa, vaa_
+            raa_[raa_>180] -= 360
+            raa_ = np.abs(raa_)
+
+            if grid:
+                roint_ref = lutdw[lut]['rgi'][reference_band]((pressure, lutdw[lut]['ipd']['rsky_t'],
+                                                 raa_, vza_, sza, wind, aot))
+            else:
+                print(wind_fit, aot_fit)
+                roint_ref = lutdw[lut]['rgi'][reference_band]((pressure, lutdw[lut]['ipd']['rsky_t'],
+                                                 raa_, vza_, sza, wind_fit, aot_fit))
+
+            roint_ratio = ref_data/roint_ref
+
+            if write_rhoi: ac.output.nc_write(ofile, 'roint_ratio', roint_ratio)
+            del roint_ref
+        ## end scaling
 
         ## get geometry - mean geom not needed for T5
         sza = gem['data']['sun_zenith']
@@ -352,6 +396,10 @@ def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, overrid
                 else:
                     roint_b = lutdw[lut]['rgi'][band]((pressure, lutdw[lut]['ipd']['rsky_t'],
                                                  raa_, vza_, sza, wind_fit, aot_fit))
+
+                ## scaling
+                if scaling: roint_b *= roint_ratio
+
                 ## write rhoi if asked
                 if write_rhoi: ac.output.nc_write(ofile, 'rhoi_{}'.format(band), roint_b)
                 ## remove rhoi from rhot
@@ -415,6 +463,7 @@ if __name__ == '__main__':
     parser.add_argument('--estimate', help='Estimate wind speed and aot from scene (default=True)', default=True)
     parser.add_argument('--estimate_return', help='Return only estimate of wind speed and aot from scene (default=False)', default=False)
     parser.add_argument('--correct', help='Perform TGC (default=True)', default=True)
+    parser.add_argument('--scaling', help='Scale the estimated roint to the reference band (default=False)', default=False)
 
     parser.add_argument('--wind', help='Wind speed(s) to use (default=None)', default=None)
     parser.add_argument('--aot', help='Aerosol optical depth(s) to use (default=None)', default=None)
@@ -450,6 +499,7 @@ if __name__ == '__main__':
     if type(args.estimate) == str: args.estimate = eval(args.estimate)
     if type(args.estimate_return) == str: args.estimate_return = eval(args.estimate_return)
     if type(args.correct) == str: args.correct = eval(args.correct)
+    if type(args.scaling) == str: args.scaling = eval(args.scaling)
 
     ## if windspeed and aot are provided
     if type(args.wind) == str:
@@ -478,7 +528,7 @@ if __name__ == '__main__':
                   estimate = args.estimate, estimate_return = args.estimate_return, correct = args.correct,
                   wind_input = args.wind, aot_input = args.aot,
                   grid_files = args.grid_files, grid_fill = args.grid_fill, grid_write = args.grid_write,
-                  toa_min = float(args.toa_min),
+                  toa_min = float(args.toa_min), scaling = args.scaling,
                  )
 
         if (args.estimate) & (args.estimate_return):
