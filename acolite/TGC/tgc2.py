@@ -21,6 +21,7 @@
 ##               2023-11-16 (QV) track band mask (assumed to be add_offset)
 ##               2024-02-28 (QV) added scaling option, i.e. to compute the per pixel ratio for roint and rhot at reference band
 ##                               changed minimum aot and wind (to allow valid LUT outputs)
+##               2024-04-09 (QV) get platform from gatts if set, added support for aot and wind datasets in inputfile
 
 def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, override = False,
         estimate = True, estimate_return = False, correct = True,
@@ -88,7 +89,11 @@ def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, overrid
     dt = dateutil.parser.parse(date)
     isodate = dt.isoformat()[0:10]
     ftime = dt.hour + dt.minute/60 + dt.second/3600
-    sensor = '{}_MSI'.format(os.path.basename(ofile)[0:3])
+
+    ## get platform QV 20240409
+    platform = os.path.basename(ofile)[0:3]
+    if 'platform' in gatts: platform = gatts['platform']
+    sensor = '{}_MSI'.format(platform)
 
     ## read sensor rsrd for band names and wavelengths
     ## maybe not needed if we don't generate L1R?
@@ -288,6 +293,13 @@ def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, overrid
                 if grid_fill: wind = ac.shared.fillnan(wind)
 
                 grid = True
+            elif ('aot' in datasets) and ('wind' in datasets): ## read anc in dataset  QV 20240409
+                if verbosity > 0: print('Reading aot and wind datasets from {}'.format(ncf))
+                aot = ac.shared.nc_data(ncf, 'aot')
+                aot[aot<aot_min] = aot_min
+                wind = ac.shared.nc_data(ncf, 'wind')
+                wind[wind<wind_min] = wind_min
+                grid = True
             else:
                 if (aot_input is None):
                     aot_fit = 1.0 * aot_default
@@ -349,10 +361,13 @@ def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, overrid
                 print(wind_fit, aot_fit)
                 roint_ref = lutdw[lut]['rgi'][reference_band]((pressure, lutdw[lut]['ipd']['rsky_t'],
                                                  raa_, vza_, sza, wind_fit, aot_fit))
+            #roint_ratio = ref_data / roint_ref
+            roint_ratio = roint_ref / ref_data  # QV 20240409
+            roint_ratio[roint_ratio<1] = 1      # QV 20240409
 
-            roint_ratio = ref_data/roint_ref
-
-            if write_rhoi: ac.output.nc_write(ofile, 'roint_ratio', roint_ratio)
+            if write_rhoi:
+                ac.output.nc_write(ofile, 'roint_ref', roint_ref)
+                ac.output.nc_write(ofile, 'roint_ratio', roint_ratio)
             del roint_ref
         ## end scaling
 
@@ -381,7 +396,10 @@ def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, overrid
 
                 ## read band data
                 d, a = ac.shared.nc_data(ncf, ds, attributes=True)
-                data_mask = (d == a['add_offset'])
+                if 'add_offset' in a:
+                    data_mask = (d == a['add_offset'])
+                else:
+                    data_mask = d.mask
 
                 ## band specific view geometry
                 vza_ = ac.shared.nc_data(ncf, 'view_zenith_B{}'.format(band))
@@ -398,7 +416,8 @@ def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, overrid
                                                  raa_, vza_, sza, wind_fit, aot_fit))
 
                 ## scaling
-                if scaling: roint_b *= roint_ratio
+                #if scaling: roint_b *= roint_ratio
+                if scaling: roint_b /= roint_ratio # QV 20240409
 
                 ## write rhoi if asked
                 if write_rhoi: ac.output.nc_write(ofile, 'rhoi_{}'.format(band), roint_b)
@@ -424,7 +443,10 @@ def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, overrid
                 d[d<toa_min] = toa_min
 
                 ## add back the mask
-                d[data_mask] = a['add_offset']
+                if 'add_offset' in a:
+                    d[data_mask] = a['add_offset']
+                else:
+                    d.mask = data_mask
 
                 ## write corrected band
                 ac.output.nc_write(ofile, ds, d)
