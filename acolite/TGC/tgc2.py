@@ -22,6 +22,7 @@
 ##               2024-02-28 (QV) added scaling option, i.e. to compute the per pixel ratio for roint and rhot at reference band
 ##                               changed minimum aot and wind (to allow valid LUT outputs)
 ##               2024-04-09 (QV) get platform from gatts if set, added support for aot and wind datasets in inputfile
+##               2024-05-22 (QV) replace Sentinel-2 in sensor name with S2
 
 def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, override = False,
         estimate = True, estimate_return = False, correct = True,
@@ -94,6 +95,8 @@ def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, overrid
     platform = os.path.basename(ofile)[0:3]
     if 'platform' in gatts: platform = gatts['platform']
     sensor = '{}_MSI'.format(platform)
+    if 'Sentinel-2' in sensor:
+        sensor = sensor.replace('Sentinel-2', 'S2')
 
     ## read sensor rsrd for band names and wavelengths
     ## maybe not needed if we don't generate L1R?
