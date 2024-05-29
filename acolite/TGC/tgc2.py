@@ -23,6 +23,7 @@
 ##                               changed minimum aot and wind (to allow valid LUT outputs)
 ##               2024-04-09 (QV) get platform from gatts if set, added support for aot and wind datasets in inputfile
 ##               2024-05-22 (QV) replace Sentinel-2 in sensor name with S2
+##               2024-05-28 (QV) added aot_min setting via cli
 
 def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, override = False,
         estimate = True, estimate_return = False, correct = True,
@@ -500,6 +501,7 @@ if __name__ == '__main__':
     parser.add_argument('--grid_write', help='Write grid in output NetCDF file (default=False)', default=False)
 
     parser.add_argument('--toa_min', help='Minimum value at TOA after TGC (default=0.0001)', default=0.0001)
+    parser.add_argument('--aot_min', help='Minimum aot (default=0.01)', default=0.01)
 
     args, unknown = parser.parse_known_args()
 
@@ -553,7 +555,7 @@ if __name__ == '__main__':
                   estimate = args.estimate, estimate_return = args.estimate_return, correct = args.correct,
                   wind_input = args.wind, aot_input = args.aot,
                   grid_files = args.grid_files, grid_fill = args.grid_fill, grid_write = args.grid_write,
-                  toa_min = float(args.toa_min), scaling = args.scaling,
+                  toa_min = float(args.toa_min), scaling = args.scaling, aot_min = float(args.aot_min)
                  )
 
         if (args.estimate) & (args.estimate_return):
