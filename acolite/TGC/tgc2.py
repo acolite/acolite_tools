@@ -24,6 +24,7 @@
 ##               2024-04-09 (QV) get platform from gatts if set, added support for aot and wind datasets in inputfile
 ##               2024-05-22 (QV) replace Sentinel-2 in sensor name with S2
 ##               2024-05-28 (QV) added aot_min setting via cli
+##               2024-11-12 (QV) update for S2C
 
 def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, override = False,
         estimate = True, estimate_return = False, correct = True,
@@ -99,9 +100,15 @@ def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, overrid
     if 'Sentinel-2' in sensor:
         sensor = sensor.replace('Sentinel-2', 'S2')
 
+    ## get sensor settings (actually only for rsr_version)
+    settings = ac.acolite.settings.parse(sensor, merge=False)
     ## read sensor rsrd for band names and wavelengths
     ## maybe not needed if we don't generate L1R?
-    rsrd = ac.shared.rsr_dict(sensor)[sensor]
+    if settings['rsr_version'] is None:
+        rsr_sensor = '{}'.format(sensor)
+    else:
+        rsr_sensor = '{}_{}'.format(sensor, settings['rsr_version'])
+    rsrd = ac.shared.rsr_dict(rsr_sensor)[rsr_sensor]
 
     uoz = 0.3
     uwv = 1.5
@@ -148,7 +155,7 @@ def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, overrid
 
     ## get gas transmittance
     tg_dict = ac.ac.gas_transmittance(geom_mean['sun_zenith'], geom_mean['view_zenith_mean'],
-                                          uoz=uoz, uwv=uwv, sensor=gem['gatts']['sensor'])
+                                          uoz=uoz, uwv=uwv, sensor=rsr_sensor)
 
     ## make bands dataset
     gem['bands'] = {}
@@ -161,7 +168,7 @@ def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, overrid
                 if k not in ['wave']: gem['bands'][b][k] = tg_dict[k][b]
 
     ## read LUT(s)
-    if lutdw is None: lutdw = ac.aerlut.import_luts(add_rsky = True, par = par, sensor=gem['gatts']['sensor'], base_luts=base_luts)
+    if lutdw is None: lutdw = ac.aerlut.import_luts(add_rsky = True, par = par, sensor=rsr_sensor, base_luts=base_luts)
     luts = list(lutdw.keys())
     lut = luts[0]
     ## lut index and dimensions
