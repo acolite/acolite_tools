@@ -25,13 +25,13 @@
 ##               2024-05-22 (QV) replace Sentinel-2 in sensor name with S2
 ##               2024-05-28 (QV) added aot_min setting via cli
 ##               2024-11-12 (QV) update for S2C
-##               2024-12-03 (QV) added process_high_sza, sza_max parameter
+##               2024-12-03 (QV) added process_high_sza, sza_max parameter, added tgas_min keyword
 
 def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, override = False,
         estimate = True, estimate_return = False, correct = True,
         wind_input = None, wind_default = 2.0, wind_min = 0.1,
         aot_input = None, aot_default = 0.1, aot_min = 0.01,
-        process_high_sza = True, sza_max = 79.999,
+        process_high_sza = True, sza_max = 79.999, tgas_min = 0.7,
         grid_files = None, grid_fill = True, grid_write = False, toa_min = 0.0001,
         lutdw = None, par = 'romix+rsky_t', base_luts = ['ACOLITE-LUT-202110-MOD2'], min_pixels = 500,
         scaling = False,
@@ -413,7 +413,7 @@ def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, overrid
             print(ds)
 
             ## correct if high transmittance
-            if gem['bands'][band]['tt_gas'] > 0.7:
+            if gem['bands'][band]['tt_gas'] > tgas_min:
                 tb0 = time.time()
                 if grid:
                     print(ds, 'computing band specific rhoi for wind and aot grid')
@@ -479,6 +479,8 @@ def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, overrid
                 tb1 = time.time()
                 secb = tb1-tb0
                 print('band {} took {:.1f} seconds'.format(band, secb))
+            else:
+                print('Not processing B{} as it has gas transmittance {:.2f} < {:.2f}'.format(band, gem['bands'][band]['tt_gas'], tgas_min))
 
         ## end time
         t1 = time.time()
@@ -524,6 +526,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--toa_min', help='Minimum value at TOA after TGC (default=0.0001)', default=0.0001)
     parser.add_argument('--aot_min', help='Minimum aot (default=0.01)', default=0.01)
+    parser.add_argument('--tgas_min', help='Minimum gas transmittance to process band (default=0.7)', default=0.7)
 
     parser.add_argument('--process_high_sza', help='Process data for sun zenith angles > 79.999 (default=True)', default=True)
 
@@ -582,6 +585,7 @@ if __name__ == '__main__':
                   grid_files = args.grid_files, grid_fill = args.grid_fill, grid_write = args.grid_write,
                   toa_min = float(args.toa_min), scaling = args.scaling,
                   process_high_sza = args.process_high_sza, aot_min = float(args.aot_min),
+                  tgas_min = float(args.tgas_min),
                  )
 
         if (args.estimate) & (args.estimate_return):
