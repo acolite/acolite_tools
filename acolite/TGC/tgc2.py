@@ -25,11 +25,13 @@
 ##               2024-05-22 (QV) replace Sentinel-2 in sensor name with S2
 ##               2024-05-28 (QV) added aot_min setting via cli
 ##               2024-11-12 (QV) update for S2C
+##               2024-12-03 (QV) added process_high_sza, sza_max parameter
 
 def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, override = False,
         estimate = True, estimate_return = False, correct = True,
         wind_input = None, wind_default = 2.0, wind_min = 0.1,
         aot_input = None, aot_default = 0.1, aot_min = 0.01,
+        process_high_sza = True, sza_max = 79.999,
         grid_files = None, grid_fill = True, grid_write = False, toa_min = 0.0001,
         lutdw = None, par = 'romix+rsky_t', base_luts = ['ACOLITE-LUT-202110-MOD2'], min_pixels = 500,
         scaling = False,
@@ -324,7 +326,7 @@ def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, overrid
 
                 if verbosity > 0: print('Using external wind={:.2f}m/s aot={:.2f}'.format(wind_fit, aot_fit))
 
-    ## perform correction
+    ## make output file
     if correct:
         if os.path.exists(ofile) & (override is False):
             print('{} exists'.format(ofile))
@@ -333,9 +335,20 @@ def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, overrid
 
         ## copy inputfile
         shutil.copy(ncf, ofile)
+
+        ## read sun zenith angles
+        sza = gem['data']['sun_zenith'] * 1.0
+        if not process_high_sza:
+            if np.nanmin(sza) > sza_max:
+                correct = False
+                if verbosity > 1: print('Copied input data to outputfile, but not performing TGC (SZA >= {:.2f})'.format(np.nanmin(sza)))
+        else:
+            sza[sza > sza_max] = sza_max ## replace with sza_max
+
+    ## perform correction
+    if correct:
         if (grid) & (grid_write):
             print('Wrote aot and wind to {}'.format(ofile))
-
             ac.output.nc_write(ofile, 'aot', aot)
             ac.output.nc_write(ofile, 'wind', wind)
             print('Wrote aot and wind to {}'.format(ofile))
@@ -343,7 +356,8 @@ def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, overrid
         ## if scaling
         if scaling:
             saa = gem['data']['sun_azimuth'] * 1.0
-            sza = gem['data']['sun_zenith'] * 1.0
+            #sza = gem['data']['sun_zenith'] * 1.0
+            #sza[sza > sza_max] = sza_max
 
             if 'view_zenith_B{}'.format(reference_band) in gem['data']:
                  vza_ = gem['data']['view_zenith_B{}'.format(reference_band)] * 1.0
@@ -383,7 +397,8 @@ def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, overrid
         ## end scaling
 
         ## get geometry - mean geom not needed for T5
-        sza = gem['data']['sun_zenith']
+        #sza = gem['data']['sun_zenith']
+        #sza[sza > sza_max] = sza_max
         saa = gem['data']['sun_azimuth']
         if method == 'T4':
             vza = gem['data']['view_zenith_mean']
@@ -510,6 +525,8 @@ if __name__ == '__main__':
     parser.add_argument('--toa_min', help='Minimum value at TOA after TGC (default=0.0001)', default=0.0001)
     parser.add_argument('--aot_min', help='Minimum aot (default=0.01)', default=0.01)
 
+    parser.add_argument('--process_high_sza', help='Process data for sun zenith angles > 79.999 (default=True)', default=True)
+
     args, unknown = parser.parse_known_args()
 
     ## acolite path
@@ -534,6 +551,7 @@ if __name__ == '__main__':
     if type(args.estimate_return) == str: args.estimate_return = eval(args.estimate_return)
     if type(args.correct) == str: args.correct = eval(args.correct)
     if type(args.scaling) == str: args.scaling = eval(args.scaling)
+    if type(args.process_high_sza) == str: args.process_high_sza = eval(args.process_high_sza)
 
     ## if windspeed and aot are provided
     if type(args.wind) == str:
@@ -562,7 +580,8 @@ if __name__ == '__main__':
                   estimate = args.estimate, estimate_return = args.estimate_return, correct = args.correct,
                   wind_input = args.wind, aot_input = args.aot,
                   grid_files = args.grid_files, grid_fill = args.grid_fill, grid_write = args.grid_write,
-                  toa_min = float(args.toa_min), scaling = args.scaling, aot_min = float(args.aot_min)
+                  toa_min = float(args.toa_min), scaling = args.scaling,
+                  process_high_sza = args.process_high_sza, aot_min = float(args.aot_min),
                  )
 
         if (args.estimate) & (args.estimate_return):
