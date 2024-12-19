@@ -26,6 +26,7 @@
 ##               2024-05-28 (QV) added aot_min setting via cli
 ##               2024-11-12 (QV) update for S2C
 ##               2024-12-03 (QV) added process_high_sza, sza_max parameter, added tgas_min keyword
+##               2024-12-19 (QV) if process_high_sza = True, outputs will be generated but high sza data filled with NaNs
 
 def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, override = False,
         estimate = True, estimate_return = False, correct = True,
@@ -333,17 +334,31 @@ def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, overrid
             return
         if verbosity > 1: print('Processing to outputfile {}'.format(ofile))
 
-        ## copy inputfile
-        shutil.copy(ncf, ofile)
-
         ## read sun zenith angles
         sza = gem['data']['sun_zenith'] * 1.0
+        sza_sub = np.where(sza > sza_max)
+        sza_fraction = len(sza_sub[0])/(sza.shape[0]*sza.shape[1])
+        print('Fraction of scene with high sun zenith angle: {:.1f}%'.format(sza_fraction*100))
+
+        ## skip scene if completely high sza and process_high_sza is False
         if not process_high_sza:
-            if np.nanmin(sza) > sza_max:
+            if sza_fraction == 1.0:
                 correct = False
-                if verbosity > 1: print('Copied input data to outputfile, but not performing TGC (SZA >= {:.2f})'.format(np.nanmin(sza)))
-        else:
-            sza[sza > sza_max] = sza_max ## replace with sza_max
+                if verbosity > 1: print('Minimum sun zenith angle {:.3f} > sza_max ({:.3f}) not performing TGC'.format(np.nanmin(sza), sza_max))
+
+    ## copy inputfile
+    if correct:
+        ## copy input to output to retain SNAP file structure
+        shutil.copy(ncf, ofile)
+        print('Copied input to {}'.format(ofile))
+
+        ## fill with NaNs if all pixels are high sza
+        if sza_fraction == 1.0:
+            for band in rsrd['rsr_bands']:
+                ds = 'B{}'.format(band)
+                ac.output.nc_write(ofile, ds, sza*np.nan)
+            correct = False ## no correction to do
+            print('Replaced all bands with NaN in {}'.format(ofile))
 
     ## perform correction
     if correct:
@@ -473,6 +488,9 @@ def tgc(ncf, output=None, tgc_ext = 'TGC', method = 'T5', verbosity = 5, overrid
                     d[data_mask] = a['add_offset']
                 else:
                     d.mask = data_mask
+
+                ## add mask for high sun zenith angles
+                d[sza_sub] = np.nan
 
                 ## write corrected band
                 ac.output.nc_write(ofile, ds, d)
