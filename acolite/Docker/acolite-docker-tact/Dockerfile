@@ -5,16 +5,17 @@
 ## updated 2021-11-21 libradtran / TACT
 ## updated 2022-02-22 added L9
 ## updated 2023-10-17 changed to Ubuntu 22.04 and libRadtran 2.0.5
+## updated 2025-07-24 added conda TOS acceptance, added libgdal and updated to last GitHub version, changed to libRadtran history 2.0.5
 
 FROM ubuntu:22.04
 
-# System packages 
+# System packages
 RUN apt-get update && apt-get install -y curl
 RUN apt-get install -y git
 
 ## For LibRadtran
 RUN apt-get install -y wget  build-essential gcc gfortran libgsl-dev flex
-RUN DEBIAN_FRONTEND="noninteractive" apt-get -y install tzdata 
+RUN DEBIAN_FRONTEND="noninteractive" apt-get -y install tzdata
 RUN apt-get install -y netcdf-bin  libnetcdf-dev libnetcdff-dev python3 gawk
 
 ## clone acolite
@@ -25,7 +26,7 @@ RUN mkdir acolite/external
 WORKDIR acolite/external
 
 # get Libradtran
-RUN wget http://www.libradtran.org/download/libRadtran-2.0.5.tar.gz
+RUN wget http://www.libradtran.org/download/history/libRadtran-2.0.5.tar.gz
 RUN gzip -d libRadtran-2.0.5.tar.gz
 RUN tar -xvf libRadtran-2.0.5.tar
 WORKDIR /acolite/external/libRadtran-2.0.5
@@ -43,11 +44,15 @@ RUN curl -LO http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.s
 RUN bash Miniconda3-latest-Linux-x86_64.sh -p /miniconda -b
 RUN rm Miniconda3-latest-Linux-x86_64.sh
 ENV PATH=/miniconda/bin:${PATH}
+
+## accept channel TOS and update
+RUN conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+RUN conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+RUN conda tos accept --override-channels --channel conda-forge
 RUN conda update -y conda
 
 # Create acolite environment
-#RUN conda create -n acolite -c conda-forge python=3 numpy matplotlib scipy gdal pyproj astropy cartopy scikit-image pyhdf pyresample netcdf4 requests
-RUN conda create -n acolite -c conda-forge python=3 numpy matplotlib scipy gdal pyproj scikit-image pyhdf pyresample netcdf4 h5py requests pygrib cartopy
+RUN conda create -n acolite -c conda-forge python=3 numpy matplotlib scipy gdal libgdal-jp2openjpeg libgdal-netcdf pyproj scikit-image pyhdf pyresample netcdf4 h5py requests pygrib cartopy
 RUN conda init bash
 RUN echo "conda activate acolite" > ~/.bashrc
 

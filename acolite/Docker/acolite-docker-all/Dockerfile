@@ -5,10 +5,11 @@
 ## updated 2021-11-21 new run.sh script
 ## updated 2022-02-22 added new sensors
 ## updated 2023-10-17 Ubuntu LTS 22.04, added new sensors
+## updated 2025-07-24 added conda TOS acceptance, added S2C, WV sensors, added libgdal and updated to last GitHub version
 
 FROM ubuntu:22.04
 
-# System packages 
+# System packages
 RUN apt-get update && apt-get install -y curl
 RUN apt-get install -y git
 
@@ -20,11 +21,17 @@ RUN curl -LO http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.s
 RUN bash Miniconda3-latest-Linux-x86_64.sh -p /miniconda -b
 RUN rm Miniconda3-latest-Linux-x86_64.sh
 ENV PATH=/miniconda/bin:${PATH}
+
+## accept channel TOS and update
+RUN conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+RUN conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+RUN conda tos accept --override-channels --channel conda-forge
 RUN conda update -y conda
 
 # Create acolite environment
 #RUN conda create -n acolite -c conda-forge python=3 numpy matplotlib scipy gdal pyproj astropy cartopy scikit-image pyhdf pyresample netcdf4 requests
-RUN conda create -n acolite -c conda-forge python=3 numpy matplotlib scipy gdal pyproj scikit-image pyhdf pyresample netcdf4 h5py requests pygrib cartopy
+#RUN conda create -n acolite -c conda-forge python=3 numpy matplotlib scipy gdal pyproj scikit-image pyhdf pyresample netcdf4 h5py requests pygrib cartopy
+RUN conda create -n acolite -c conda-forge python=3 numpy matplotlib scipy gdal libgdal-jp2openjpeg libgdal-netcdf pyproj scikit-image pyhdf pyresample netcdf4 h5py requests pygrib cartopy
 RUN conda init bash
 RUN echo "conda activate acolite" > ~/.bashrc
 
@@ -41,6 +48,7 @@ RUN conda run -n acolite python ./acolite/launch_acolite.py --retrieve_luts --se
 
 RUN conda run -n acolite python ./acolite/launch_acolite.py --retrieve_luts --sensor S2A_MSI
 RUN conda run -n acolite python ./acolite/launch_acolite.py --retrieve_luts --sensor S2B_MSI
+RUN conda run -n acolite python ./acolite/launch_acolite.py --retrieve_luts --sensor S2C_MSI
 
 RUN conda run -n acolite python ./acolite/launch_acolite.py --retrieve_luts --sensor S3A_OLCI
 RUN conda run -n acolite python ./acolite/launch_acolite.py --retrieve_luts --sensor S3B_OLCI
@@ -55,6 +63,9 @@ RUN conda run -n acolite python ./acolite/launch_acolite.py --retrieve_luts --se
 RUN conda run -n acolite python ./acolite/launch_acolite.py --retrieve_luts --sensor VENµS_VSSC
 RUN conda run -n acolite python ./acolite/launch_acolite.py --retrieve_luts --sensor WorldView2
 RUN conda run -n acolite python ./acolite/launch_acolite.py --retrieve_luts --sensor WorldView3
+RUN conda run -n acolite python ./acolite/launch_acolite.py --retrieve_luts --sensor WorldView4
+RUN conda run -n acolite python ./acolite/launch_acolite.py --retrieve_luts --sensor WV_LG01
+RUN conda run -n acolite python ./acolite/launch_acolite.py --retrieve_luts --sensor WV_LG02
 RUN conda run -n acolite python ./acolite/launch_acolite.py --retrieve_luts --sensor Quickbird2
 
 RUN conda run -n acolite python ./acolite/launch_acolite.py --retrieve_luts --sensor PlanetScope_0c
