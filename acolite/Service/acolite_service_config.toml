@@ -1,0 +1,14 @@
+## service configuration
+acolite_path = "$HOME/git/acolite"
+settings_config = "acolite_service_settings.toml"
+site_config = "acolite_service_sites.toml"
+output_directory = "$HOME/$SITE"
+
+## input scene configuration
+l1_scene_directory = "$HOME/Scenes"
+delete_l1 = true
+delete_l1_delay = 3
+
+## tact options
+tact_sources = ["Landsat"]
+tact_time_delay = 1

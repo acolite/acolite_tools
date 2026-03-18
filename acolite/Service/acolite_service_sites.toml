@@ -1,0 +1,16 @@
+## example for a date range from today
+[Blankaart]
+name = "Blankaart"
+station_lat = 50.988265
+station_lon = 2.830296
+station_box_size = 3
+output = "$HOME/$SITE"
+n_days = 3
+sources = ["Landsat", "Sentinel-2"]
+processors = ["DSF", "RAdCor", "TACT"]
+merge_tiles = true
+override = false
+cloud_mask = true
+mask_target_wkt = "POLYGON ((2.823925954716003 50.989301201336986, 2.8245908197240226 50.986137653458854, 2.828677784036131 50.98424188332811, 2.8336838264469293 50.98469736763329, 2.8366561641277883 50.98719629659627, 2.835971744267482 50.99038438996814, 2.8318847799553737 50.992279909245525, 2.8268787375445754 50.99181219090414, 2.823925954716003 50.989301201336986))"
+active = true
+
