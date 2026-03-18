@@ -1,5 +1,8 @@
 ## Note
-This is an example service for processing Sentinel-2 and Landsat data for a given site (as defined by latitude, longitude and a box size). The acolite_service_run.sh script can be added to a crontab for automated processing.
+This is an example service for processing Sentinel-2 and Landsat data for a given site (as defined by latitude, longitude and a box size). The acolite_service_run.sh script can be added to a crontab for automated recurring processing, and will activate the named conda environment before running the service script. The default acolite environment can be used, after additionally adding the "omnicloudmask" package, e.g.
+
+            conda activate acolite
+            conda install -c conda-forge omnicloudmask
 
 ## Configuration
 There are three configuration files that can be edited to configure the service. $HOME and $SITE parameters are replaced by the user home directory and the site name.
