@@ -24,6 +24,8 @@ def launch_service(acolite_path = None):
         if type(service_config[k]) is str:
             if service_config[k].startswith('$HOME'):
                 service_config[k] = '{}{}'.format(user_home, service_config[k][5:])
+            if service_config[k].startswith('$PATH'):
+                service_config[k] = '{}{}'.format(path, service_config[k][5:])
 
     # load second file as site config
     if len(sys.argv) >= 2:

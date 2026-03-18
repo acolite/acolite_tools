@@ -4,7 +4,7 @@ settings_config = "acolite_service_settings.toml"
 site_config = "acolite_service_sites.toml"
 
 ## input scene configuration
-l1_scene_directory = "$HOME/Scenes"
+l1_scene_directory = "$PATH/Scenes"
 delete_l1 = true
 delete_l1_delay = 3
 
