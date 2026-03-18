@@ -10,4 +10,4 @@ delete_l1_delay = 3
 
 ## tact options
 tact_sources = ["Landsat"]
-tact_time_delay = 1
+tact_time_delay = 1.5
