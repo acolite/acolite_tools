@@ -5,7 +5,7 @@ This is an example service for processing Sentinel-2 and Landsat data for a give
             conda install -c conda-forge omnicloudmask
 
 ## Configuration
-There are three configuration files that can be edited to configure the service. $HOME and $SITE parameters are replaced by the user home directory and the site name.
+There are three configuration files that can be edited to configure the service. $HOME and $SITE parameters are replaced by the user home directory and the site name. $PATH is replaced with the acolite_tools/acolite/Service directory location.
 
 acolite_service_config.toml Contains the local path to the main acolite distribution (a clone of https://github.com/acolite/acolite) and the path to the settings and site configurations (defaults are given below). Optionally, the site configuration toml file can be provided as the first argument on the command line.
 

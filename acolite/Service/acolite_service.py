@@ -42,6 +42,9 @@ def launch_service(acolite_path = None):
                 ## replace $HOME with home directory
                 if site_config_dict[site][k].startswith('$HOME'):
                     site_config_dict[site][k] = '{}{}'.format(user_home, site_config_dict[site][k][5:])
+                ## replace $PATH with scripts directory
+                if site_config_dict[site][k].startswith('$PATH'):
+                    site_config_dict[site][k] = '{}{}'.format(path, site_config_dict[site][k][5:])
                 ## replace $SITE with site name
                 if '$SITE' in site_config_dict[site][k]:
                     site_config_dict[site][k] = site_config_dict[site][k].replace('$SITE', site_name)
