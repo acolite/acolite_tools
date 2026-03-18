@@ -1,6 +1,6 @@
 ## service configuration
 #acolite_path = "$HOME/git/acolite"
-acolite_path = "$PATH/../../../git/acolite"
+acolite_path = "$PATH/../../../acolite"
 settings_config = "$PATH/acolite_service_settings.toml"
 site_config = "$PATH/acolite_service_sites.toml"
 
