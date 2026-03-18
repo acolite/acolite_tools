@@ -1,7 +1,7 @@
 ## service configuration
 acolite_path = "$HOME/git/acolite"
-settings_config = "acolite_service_settings.toml"
-site_config = "acolite_service_sites.toml"
+settings_config = "$PATH/acolite_service_settings.toml"
+site_config = "$PATH/acolite_service_sites.toml"
 
 ## input scene configuration
 l1_scene_directory = "$PATH/Scenes"
