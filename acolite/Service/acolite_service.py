@@ -116,7 +116,10 @@ def launch_service(acolite_path = None):
         ## figure out dates to run
         now = datetime.datetime.now()
         if 'datelist' in site_config_dict[site]:
-            dates = [d for d in site_config_dict[site]['datelist']]
+            if type(site_config_dict[site]['datelist']) is not list:
+                dates = [site_config_dict[site]['datelist']]
+            else:
+                dates = [d for d in site_config_dict[site]['datelist']]
         else:
             if 'end_date' not in site_config_dict[site]:
                 end = datetime.datetime(now.year, now.month, now.day)
