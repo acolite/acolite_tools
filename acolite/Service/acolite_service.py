@@ -115,21 +115,24 @@ def launch_service(acolite_path = None):
 
         ## figure out dates to run
         now = datetime.datetime.now()
-        if 'end_date' not in site_config_dict[site]:
-            end = datetime.datetime(now.year, now.month, now.day)
+        if 'datelist' in site_config_dict[site]:
+            dates = [d for d in site_config_dict[site]['datelist']]
         else:
-            end = dateutil.parser.parse(site_config_dict[site]['end_date'])
+            if 'end_date' not in site_config_dict[site]:
+                end = datetime.datetime(now.year, now.month, now.day)
+            else:
+                end = dateutil.parser.parse(site_config_dict[site]['end_date'])
 
-        if 'start_date' not in site_config_dict[site]:
-            cur_date = end - datetime.timedelta(days = site_config_dict[site]['n_days'] - 1)
-        else:
-            start = dateutil.parser.parse(site_config_dict[site]['start_date'])
-            cur_date = datetime.datetime(start.year, start.month, start.day)
+            if 'start_date' not in site_config_dict[site]:
+                cur_date = end - datetime.timedelta(days = site_config_dict[site]['n_days'] - 1)
+            else:
+                start = dateutil.parser.parse(site_config_dict[site]['start_date'])
+                cur_date = datetime.datetime(start.year, start.month, start.day)
 
-        dates = []
-        while (cur_date <= end):
-            dates.append(cur_date.isoformat()[0:10])
-            cur_date += datetime.timedelta(days = 1)
+            dates = []
+            while (cur_date <= end):
+                dates.append(cur_date.isoformat()[0:10])
+                cur_date += datetime.timedelta(days = 1)
         print('Running for {} day{}, from {} to {}'.format(len(dates), '' if len(dates) == 1 else 's', dates[0], dates[-1]))
 
         roi = 'POINT ({} {})'.format(site_config_dict[site]['station_lon'], site_config_dict[site]['station_lat'])
