@@ -4,6 +4,7 @@
 ## 2026-03-05
 ## modifications: 2026-03-16 (QV) switch to TOML for configs, allow multiple sites
 ##                2026-03-17 (QV) changed scene location and deletion
+##                2026-03-19 (QV) added passing of settings with acolite key, added rgb_range for ocm
 
 def launch_service(acolite_path = None):
     import sys, os, glob, tomllib
@@ -84,6 +85,11 @@ def launch_service(acolite_path = None):
                            run = False
                        else:
                            settings_sites[site][processor][k] = site_config_dict[site][k]
+
+            ## if acolite key is provided, copy settings
+            if 'acolite' in site_config_dict[site]:
+                for k in site_config_dict[site]['acolite']:
+                    settings_sites[site][processor][k] = site_config_dict[site]['acolite'][k]
 
             ## replace placeholder values with value from configuration
             #for k in settings_base[processor]:
@@ -229,8 +235,14 @@ def launch_service(acolite_path = None):
                             else:
                                 continue
 
+
+                            rgb_range = [0, 0.15]
+                            if 'rgb_min' in settings: rgb_range[0] = settings['rgb_min'][0]
+                            if 'rgb_max' in settings: rgb_range[1] = settings['rgb_max'][0]
+
                             ## cloud masking
-                            cm = ac.masking.ocm(ncf, export_maps = True, export_netcdf = True, dataset = ocm_dataset,
+                            cm = ac.masking.ocm(ncf, export_maps = True, export_netcdf = True,
+                                                rgb_range = rgb_range, dataset = ocm_dataset,
                                                 masks = {1: {'name': 'Thick Cloud', 'color': 'red'},
                                                          2: {'name': 'Thin Cloud', 'color': 'orange'},
                                                          3: {'name': 'Cloud Shadow', 'color': 'yellow'}})
