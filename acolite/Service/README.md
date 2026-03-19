@@ -11,4 +11,4 @@ acolite_service_config.toml Contains the local path to the main acolite distribu
 
 acolite_service_settings.toml Example base settings for the processing. Multiple processing settings can be provided. In the example DSF, RAdCor, and TACT processing are given. TACT processing is skipped by default for Sentinel-2. Setting values starting with @ are copied from the target settings.
 
-acolite_service_sites.toml Example settings for site and processing configuration. Can be configured either for a date or date range, or counting back a number of days from today.
+acolite_service_sites.toml Example settings for site and processing configuration. Can be configured either for a date or date range, or counting back a number of days from today. Settings starting with "acolite." will be passed along to ACOLITE in the processing settings, and override those in the acolite_service_settings.toml definition. For example activating the glint correction could be done by "acolite.dsf_residual_glint_correction = true" and disabling negatives masking by "acolite.l2w_mask_negative_rhow = false"
