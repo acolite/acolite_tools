@@ -9,6 +9,30 @@ l2w_parameters = ["rhow_*"]
 l2r_export_geotiff_rgb = true
 netcdf_compression = true
 
+[DSF-F]
+station_lat = "@station_lat"
+station_lon = "@station_lon"
+station_box_size = "@station_box_size"
+station_box_units = "km"
+merge_tiles = true
+ancillary_data = false
+l2w_parameters = ["rhow_*"]
+l2r_export_geotiff_rgb = true
+netcdf_compression = true
+dsf_aot_estimate = 'fixed'
+
+[DSF-A]
+station_lat = "@station_lat"
+station_lon = "@station_lon"
+station_box_size = "@station_box_size"
+station_box_units = "km"
+merge_tiles = true
+ancillary_data = false
+l2w_parameters = ["rhow_*"]
+l2r_export_geotiff_rgb = true
+netcdf_compression = true
+dsf_aot_estimate = 'ancillary_fixed'
+
 [RAdCor]
 station_lat = "@station_lat"
 station_lon = "@station_lon"
@@ -24,6 +48,23 @@ radcor_crop_centre = true
 rgb_rhosu = true
 limit_buffer = 5
 limit_buffer_units = "km"
+
+[RAdCor-A]
+station_lat = "@station_lat"
+station_lon = "@station_lon"
+station_box_size = "@station_box_size"
+station_box_units = "km"
+merge_tiles = true
+ancillary_data = false
+l2w_parameters = ["rhow_*"]
+l2r_export_geotiff_rgb = true
+netcdf_compression = true
+atmospheric_correction_method = "radcor"
+radcor_crop_centre = true
+rgb_rhosu = true
+limit_buffer = 5
+limit_buffer_units = "km"
+radcor_aot_estimate = "ancillary_fixed"
 
 [TACT]
 station_lat = "@station_lat"
