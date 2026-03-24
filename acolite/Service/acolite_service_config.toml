@@ -3,9 +3,10 @@
 acolite_path = "$PATH/../../../acolite"
 settings_config = "$PATH/acolite_service_settings.toml"
 site_config = "$PATH/acolite_service_sites.toml"
+base_directory = "$PATH/"
 
 ## input scene configuration
-l1_scene_directory = "$PATH/Scenes"
+l1_scene_directory = "$BASE/Scenes"
 delete_l1 = true
 delete_l1_delay = 3
 

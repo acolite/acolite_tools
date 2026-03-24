@@ -5,6 +5,7 @@
 ## modifications: 2026-03-16 (QV) switch to TOML for configs, allow multiple sites
 ##                2026-03-17 (QV) changed scene location and deletion
 ##                2026-03-19 (QV) added passing of settings with acolite key, added rgb_range for ocm
+##                2026-03-23 (QV) added base directory
 
 def launch_service(acolite_path = None):
     import sys, os, glob, tomllib
@@ -28,6 +29,16 @@ def launch_service(acolite_path = None):
             if service_config[k].startswith('$PATH'):
                 service_config[k] = '{}{}'.format(path, service_config[k][5:])
 
+    ## set base directory
+    if 'base_directory' in service_config:
+        base = '{}'.format(service_config['base_directory'])
+    else:
+        base = '{}'.format(path)
+    for k in service_config:
+        if type(service_config[k]) is str:
+            if service_config[k].startswith('$BASE'):
+                service_config[k] = '{}{}'.format(base, service_config[k][5:])
+
     # load second file as site config
     if len(sys.argv) >= 2:
        site_config_file = sys.argv[1]
@@ -46,6 +57,8 @@ def launch_service(acolite_path = None):
                 ## replace $PATH with scripts directory
                 if site_config_dict[site][k].startswith('$PATH'):
                     site_config_dict[site][k] = '{}{}'.format(path, site_config_dict[site][k][5:])
+                if site_config_dict[site][k].startswith('$BASE'):
+                    site_config_dict[site][k] = '{}{}'.format(base, site_config_dict[site][k][5:])
                 ## replace $SITE with site name
                 if '$SITE' in site_config_dict[site][k]:
                     site_config_dict[site][k] = site_config_dict[site][k].replace('$SITE', site_name)
