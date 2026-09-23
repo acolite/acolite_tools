@@ -7,8 +7,8 @@ base_directory = "$PATH/"
 
 ## input scene configuration
 l1_scene_directory = "$BASE/Scenes"
-delete_l1 = true
-delete_l1_delay = 3
+l1_delete = true
+l1_delete_delay = 3
 
 ## tact options
 tact_sources = ["Landsat"]

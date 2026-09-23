@@ -304,7 +304,7 @@ def launch_service(acolite_path = None):
 
     ## clean up l1 scenes - changed logic to store data per date
     ## here delete all scenes for that date if
-    if service_config['delete_l1']:
+    if service_config['l1_delete']:
         l1_dirs = glob.glob('{}/*'.format(service_config['l1_scene_directory']))
         #print(service_config['l1_scene_directory'], l1_dirs)
         for l1_dir in l1_dirs:
@@ -313,7 +313,7 @@ def launch_service(acolite_path = None):
             nscenes = len(l1_paths)
             l1_date = os.path.basename(l1_dir)
             diff = now - datetime.datetime(int(l1_date[0:4]), int(l1_date[5:7]), int(l1_date[8:10]))
-            if (diff.total_seconds() > (86400 * service_config['delete_l1_delay'])):
+            if (diff.total_seconds() > (86400 * service_config['l1_delete_delay'])):
                 if nscenes > 0:
                     print('Deleting {} input scenes for date {} at {}'.format(nscenes, date, l1_dir))
                     for local_scene in l1_paths: shutil.rmtree(local_scene)
