@@ -199,6 +199,33 @@ def launch_service(acolite_path = None):
                         scene_dict[orb]['identifier_list'].append(identifier_list[si])
                         scene_dict[orb]['dataset_list'].append(dataset_list[si])
                         scene_dict[orb]['scenes'].append(identifier_list[si])
+                elif source == 'PlanetScope':
+                    ## set up geometry for this region
+                    region = '{}-{}x{}km'.format(site_config_dict[site]['name'],
+                                                 site_config_dict[site]['planet_order_box_size'],
+                                                 site_config_dict[site]['planet_order_box_size'])
+                    limit = ac.shared.limit.station_check(site_config_dict[site]['station_lon'],
+                                                          site_config_dict[site]['station_lat'],
+                                                          site_config_dict[site]['planet_order_box_size'], 'km')['limit']
+                    geojson_geometry = {'type': 'Polygon', 'coordinates': [[[limit[1],limit[0]],
+                                        [limit[3],limit[0]], [limit[3],limit[2]], [limit[1],limit[2]], [limit[1],limit[0]] ]]}
+
+                    ## query features for this date and geometry
+                    features = ac.api.planet.query(geojson_geometry, date,
+                                max_cloud = site_config_dict[site]['planet_max_cloud'],
+                                min_cover = site_config_dict[site]['planet_min_cover'])
+
+                    ## combine scenes per date/unit
+                    scene_dict = {}
+                    for f in features:
+                        sp = f['id'].split('_')
+                        orb = '_'.join(('PSScene', sp[0], sp[1], sp[3]))
+                        if orb not in scene_dict: scene_dict[orb] = {'scenes':[], 'ids': [], 'features': []}
+                        ## create file name
+                        oname = '{}.zip'.format('_'.join((f['properties']['item_type'], site_config_dict[site]['planet_asset'], f['id'], region)))
+                        scene_dict[orb]['scenes'].append(oname)
+                        scene_dict[orb]['ids'].append(f['id'])
+                        scene_dict[orb]['features'].append(f)
 
                 ## run through orbit combinations
                 for orb in scene_dict:
@@ -236,6 +263,19 @@ def launch_service(acolite_path = None):
                                                                                      scene_dict[orb]['dataset_list'][si],
                                                                                      scene_dict[orb]['identifier_list'][si],
                                                                                      output = '{}/{}'.format(service_config['l1_scene_directory'], date))
+                                    elif source == 'PlanetScope':
+                                        ## get feature if it has the right assets
+                                        f = scene_dict[orb]['features'][si]
+                                        if site_config_dict[site]['planet_asset_filter'] in f['assets']:
+                                            print(f['id'])
+                                            print('start', datetime.datetime.now().isoformat()[0:19])
+                                            obj = ac.api.planet.order(f, '{}/{}'.format(service_config['l1_scene_directory'], date),
+                                                                      region, geojson_geometry, asset = site_config_dict[site]['planet_asset'])
+                                            obj.process()
+                                            print('end', datetime.datetime.now().isoformat()[0:19])
+                                            local_scene_ = ['{}/{}/{}'.format(service_config['l1_scene_directory'], date, scene)]
+                                        else:
+                                            print(f['assets'])
 
                                     local_scene = local_scene_[0]
                                 settings['inputfile'].append(local_scene)
@@ -253,7 +293,6 @@ def launch_service(acolite_path = None):
                                 ocm_dataset = 'rhot'
                             else:
                                 continue
-
 
                             rgb_range = [0, 0.15]
                             if 'rgb_min' in settings: rgb_range[0] = settings['rgb_min'][0]
@@ -306,10 +345,12 @@ def launch_service(acolite_path = None):
     ## here delete all scenes for that date if
     if service_config['l1_delete']:
         l1_dirs = glob.glob('{}/*'.format(service_config['l1_scene_directory']))
-        #print(service_config['l1_scene_directory'], l1_dirs)
         for l1_dir in l1_dirs:
             l1_paths = glob.glob('{}/*'.format(l1_dir))
             l1_paths.sort()
+            ## skip Planet data for deletion
+            if not service_config['planet_l1_delete']:
+                l1_paths = [p for p in l1_paths if 'PSScene' not in p]
             nscenes = len(l1_paths)
             l1_date = os.path.basename(l1_dir)
             diff = now - datetime.datetime(int(l1_date[0:4]), int(l1_date[5:7]), int(l1_date[8:10]))

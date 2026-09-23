@@ -9,6 +9,7 @@ base_directory = "$PATH/"
 l1_scene_directory = "$BASE/Scenes"
 l1_delete = true
 l1_delete_delay = 3
+planet_l1_delete = false
 
 ## tact options
 tact_sources = ["Landsat"]

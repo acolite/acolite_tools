@@ -85,3 +85,34 @@ tact_profile_source = "gdas1"
 map_l2t = true
 l2t_export_geotiff = true
 delete_extracted_input = true
+
+[DSF-Planet]
+station_lat = "@station_lat"
+station_lon = "@station_lon"
+station_box_size = "@station_box_size"
+station_box_units = "km"
+merge_tiles = true
+ancillary_data = false
+l2w_parameters = ["rhow_*"]
+l2r_export_geotiff_rgb = true
+netcdf_compression = true
+dsf_aot_estimate = 'fixed'
+delete_extracted_input = true
+
+[RAdCor-Planet]
+station_lat = "@station_lat"
+station_lon = "@station_lon"
+station_box_size = "@station_box_size"
+station_box_units = "km"
+merge_tiles = true
+ancillary_data = false
+l2w_parameters = ["rhow_*"]
+l2r_export_geotiff_rgb = true
+netcdf_compression = true
+atmospheric_correction_method = "radcor"
+radcor_crop_centre = true
+rgb_rhosu = true
+limit_buffer = 5
+limit_buffer_units = "km"
+delete_extracted_input = true
+radcor_kernel_radius = "@radcor_kernel_radius"
