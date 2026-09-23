@@ -8,6 +8,7 @@ ancillary_data = false
 l2w_parameters = ["rhow_*"]
 l2r_export_geotiff_rgb = true
 netcdf_compression = true
+delete_extracted_input = true
 
 [DSF-F]
 station_lat = "@station_lat"
@@ -20,6 +21,7 @@ l2w_parameters = ["rhow_*"]
 l2r_export_geotiff_rgb = true
 netcdf_compression = true
 dsf_aot_estimate = 'fixed'
+delete_extracted_input = true
 
 [DSF-A]
 station_lat = "@station_lat"
@@ -32,6 +34,7 @@ l2w_parameters = ["rhow_*"]
 l2r_export_geotiff_rgb = true
 netcdf_compression = true
 dsf_aot_estimate = 'ancillary_fixed'
+delete_extracted_input = true
 
 [RAdCor]
 station_lat = "@station_lat"
@@ -48,6 +51,7 @@ radcor_crop_centre = true
 rgb_rhosu = true
 limit_buffer = 5
 limit_buffer_units = "km"
+delete_extracted_input = true
 
 [RAdCor-A]
 station_lat = "@station_lat"
@@ -65,6 +69,7 @@ rgb_rhosu = true
 limit_buffer = 5
 limit_buffer_units = "km"
 radcor_aot_estimate = "ancillary_fixed"
+delete_extracted_input = true
 
 [TACT]
 station_lat = "@station_lat"
@@ -79,3 +84,4 @@ tact_run = true
 tact_profile_source = "gdas1"
 map_l2t = true
 l2t_export_geotiff = true
+delete_extracted_input = true
