@@ -2,6 +2,10 @@
 ## written by Quinten Vanhellemont, RBINS
 ## 2026-03-05
 ## modifications: 2026-03-16 (QV) add path testing for conda env source
+##                2026-09-28 (QV) add PL_API_KEY export
+
+## add Planet API key to environment
+export PL_API_KEY=''
 
 ## assume miniconda is in the user home
 home=`eval echo "~$USER"`
