@@ -6,12 +6,14 @@
 ## updated 2022-02-22 added L9
 ## updated 2023-10-17 changed to Ubuntu 22.04 and libRadtran 2.0.5
 ## updated 2025-07-24 added conda TOS acceptance, added libgdal and updated to last GitHub version, changed to libRadtran history 2.0.5
+## updated 2026-10-05 changed from miniconda to micromamba updated to last GitHub version
 
 FROM ubuntu:22.04
 
 # System packages
 RUN apt-get update && apt-get install -y curl
 RUN apt-get install -y git
+RUN apt-get install -y bzip2
 
 ## For LibRadtran
 RUN apt-get install -y wget  build-essential gcc gfortran libgsl-dev flex
@@ -39,28 +41,19 @@ RUN make check
 ## reset workin directory
 WORKDIR /
 
-# Install miniconda to /miniconda
-RUN curl -LO http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
-RUN bash Miniconda3-latest-Linux-x86_64.sh -p /miniconda -b
-RUN rm Miniconda3-latest-Linux-x86_64.sh
-ENV PATH=/miniconda/bin:${PATH}
-
-## accept channel TOS and update
-RUN conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
-RUN conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
-RUN conda tos accept --override-channels --channel conda-forge
-RUN conda update -y conda
+# Install micromamba
+RUN curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj bin/micromamba
+RUN eval "$(./bin/micromamba shell hook -s posix)"
 
 # Create acolite environment
-RUN conda create -n acolite -c conda-forge python=3 numpy matplotlib scipy gdal libgdal-jp2openjpeg libgdal-netcdf pyproj scikit-image pyhdf pyresample netcdf4 h5py requests pygrib cartopy
-RUN conda init bash
-RUN echo "conda activate acolite" > ~/.bashrc
+RUN micromamba create --file acolite/environment.yml
+RUN echo "micromamba activate acolite" > ~/.bashrc
 
 ## get LUTs
-RUN conda run -n acolite python ./acolite/launch_acolite.py --retrieve_luts --sensor L8_OLI
-RUN conda run -n acolite python ./acolite/launch_acolite.py --retrieve_luts --sensor L9_OLI
-RUN conda run -n acolite python ./acolite/launch_acolite.py --retrieve_luts --sensor L5_TM
-RUN conda run -n acolite python ./acolite/launch_acolite.py --retrieve_luts --sensor L7_ETM
+RUN micromamba run -n acolite python ./acolite/launch_acolite.py --retrieve_luts --sensor L8_OLI
+RUN micromamba run -n acolite python ./acolite/launch_acolite.py --retrieve_luts --sensor L9_OLI
+RUN micromamba run -n acolite python ./acolite/launch_acolite.py --retrieve_luts --sensor L5_TM
+RUN micromamba run -n acolite python ./acolite/launch_acolite.py --retrieve_luts --sensor L7_ETM
 
 # add input, output and settings mount points/files
 ADD ./input /input
