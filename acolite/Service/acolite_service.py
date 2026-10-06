@@ -214,7 +214,8 @@ def launch_service(acolite_path = None):
                     features = ac.api.planet.query(geojson_geometry, date,
                                 max_cloud = site_config_dict[site]['planet_max_cloud'],
                                 min_cover = site_config_dict[site]['planet_min_cover'])
-
+                    if features is None: continue
+                        
                     ## combine scenes per date/unit
                     scene_dict = {}
                     for f in features:
