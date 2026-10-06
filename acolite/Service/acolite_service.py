@@ -279,8 +279,11 @@ def launch_service(acolite_path = None):
                                             print(f['assets'])
 
                                     local_scene = local_scene_[0]
-                                settings['inputfile'].append(local_scene)
+                                if os.path.exists(local_scene): settings['inputfile'].append(local_scene)
                             settings['inputfile'].sort()
+                            if len(settings['inputfile']) == 0:
+                                print('Could not retrieve scenes for {} and {}'.format(source, orb))
+                                continue
 
                             ## run processing
                             r = ac.acolite.acolite_run(settings)
